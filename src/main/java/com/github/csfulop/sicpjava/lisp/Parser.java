@@ -1,5 +1,7 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.ParserException;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

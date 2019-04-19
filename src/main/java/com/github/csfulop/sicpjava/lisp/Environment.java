@@ -1,5 +1,7 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
+
 import java.util.HashMap;
 import java.util.Map;
 

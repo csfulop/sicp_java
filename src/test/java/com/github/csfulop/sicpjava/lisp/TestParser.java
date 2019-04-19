@@ -1,10 +1,10 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.ParserException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static com.github.csfulop.sicpjava.lisp.ExpressionList.l;
 import static com.github.csfulop.sicpjava.lisp.Token.t;

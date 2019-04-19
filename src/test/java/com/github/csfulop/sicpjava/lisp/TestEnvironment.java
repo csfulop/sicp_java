@@ -1,5 +1,6 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
