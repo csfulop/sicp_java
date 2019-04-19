@@ -2,7 +2,6 @@ package com.github.csfulop.sicpjava.lisp;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class Environment {
     private Map<String, Object> env = new HashMap<>();
@@ -18,12 +17,11 @@ public class Environment {
         env.put(key, value);
     }
 
-    public Optional<Object> get(String key) {
+    public Object get(String key) {
         Object value = env.get(key);
-        if (value != null) {
-            return Optional.of(value);
-        } else {
-            return Optional.empty();
+        if (value == null) {
+            throw new LispException("Unbound variable " + key + "!");
         }
+        return value;
     }
 }

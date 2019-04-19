@@ -1,5 +1,6 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.functions.Add;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +47,7 @@ public class TestLispEvaluator {
         // when
         Object result = evaluator.eval(expression, environment);
         // then
-        assertThat(environment.get("a").get(), is(12));
+        assertThat(environment.get("a"), is(12));
     }
 
     @Test
@@ -57,6 +58,17 @@ public class TestLispEvaluator {
         // when
         Object result = evaluator.eval(expression, environment);
         // then
-        assertThat(environment.get("a").get(), is(12));
+        assertThat(environment.get("a"), is(12));
+    }
+
+    @Test
+    void testAdd() {
+        // given
+        environment.define("+", new Add());
+        Expression expression = l(t("+"), t("1"), t("2"));
+        // when
+        Object result = evaluator.eval(expression, environment);
+        // then
+        assertThat(result, is(3));
     }
 }

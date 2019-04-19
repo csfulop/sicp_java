@@ -1,6 +1,12 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import lombok.NonNull;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class LispEvaluator {
     public Object eval(Expression expression, Environment environment) {
@@ -10,17 +16,24 @@ public class LispEvaluator {
         }
 
         if (isVariable(expression)) {
-            return environment.get(((Token) expression).getValue()).get();
-        }
-
-        if (isDefinition(expression)) {
+            return environment.get(((Token) expression).getValue());
+        } else if (isDefinition(expression)) {
             evalDefinition(expression, environment);
-        }
-
-        if (isAssignment(expression)) {
+        } else if (isAssignment(expression)) {
             evalAssignment(expression, environment);
+        } else if (isApplication(expression)) {
+            ExpressionList list = (ExpressionList) expression;
+            Function procedure = (Function) eval(list.getExpressions()[0], environment);
+            LinkedList<@NonNull Expression> argumentList = new LinkedList<>(Arrays.asList(list.getExpressions()));
+            argumentList.remove(0);
+            List<Object> evaluatedArguments = argumentList.stream().map(o -> eval(o, environment)).collect(Collectors.toList());
+            return apply(procedure, evaluatedArguments.toArray());
         }
         return null;
+    }
+
+    private Object apply(Function procedure, Object... arguments) {
+        return procedure.run(arguments);
     }
 
     private Optional<Object> selfEvaluating(Expression expression) {
@@ -67,6 +80,10 @@ public class LispEvaluator {
         String valueString = ((Token) tags[2]).getValue();
         value = Integer.parseInt(valueString); // FIXME: eval value
         environment.set(key, value);
+    }
+
+    private boolean isApplication(Expression expression) {
+        return expression instanceof ExpressionList;
     }
 
     private boolean isTaggedList(Expression expression, String tag) {
