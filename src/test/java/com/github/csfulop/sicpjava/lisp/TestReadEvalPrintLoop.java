@@ -46,7 +46,7 @@ public class TestReadEvalPrintLoop {
     @Test
     void testAddVariables() {
         repl.eval("(define a 1)");
-        assertThat(repl.eval("(+ a 2)"), is(3));
+        assertThat(repl.eval("(+ a 2 3)"), is(6));
     }
 
     @Test
@@ -56,4 +56,20 @@ public class TestReadEvalPrintLoop {
         InputStream inputStream = new ByteArrayInputStream(code.getBytes(Charset.forName("UTF-8")));
         assertThat(repl.readEvalPrintLoop(inputStream), is(3));
     }
+
+    @Test
+    void testMultiplyVariables() {
+        repl.eval("(define a 3)");
+        assertThat(repl.eval("(* a 2 4)"), is(24));
+    }
+
+    @Test
+    void testAddAndMultiplyVariables() {
+        repl.eval("(define a 2)");
+        repl.eval("(define b 3)");
+        assertThat(repl.eval("(* (+ 1 b) (+ a 2) 2)"), is(32));
+    }
+
+
+
 }
