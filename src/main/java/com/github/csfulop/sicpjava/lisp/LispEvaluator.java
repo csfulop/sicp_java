@@ -4,9 +4,10 @@ import lombok.NonNull;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.stream;
 
 public class LispEvaluator {
     public Object eval(Expression expression, Environment environment) {
@@ -24,12 +25,9 @@ public class LispEvaluator {
         } else if (isBegin(expression)) {
             return evalSequence(beginActions(expression), environment);
         } else if (isApplication(expression)) {
-            ExpressionList list = (ExpressionList) expression;
-            Function procedure = (Function) eval(list.getExpressions()[0], environment);
-            LinkedList<@NonNull Expression> argumentList = new LinkedList<>(Arrays.asList(list.getExpressions()));
-            argumentList.remove(0);
-            List<Object> evaluatedArguments = argumentList.stream().map(o -> eval(o, environment)).collect(Collectors.toList());
-            return apply(procedure, evaluatedArguments.toArray());
+            return apply(
+                    (Function) eval(operator(expression), environment),
+                    evalValues(operands(expression), environment));
         }
         return null;
     }
@@ -76,7 +74,7 @@ public class LispEvaluator {
     }
 
     private Expression[] beginActions(Expression expression) {
-        return expressionTail(expression);
+        return expressionCdr(expression);
     }
 
     private Object evalSequence(Expression[] expressions, Environment environment) {
@@ -104,16 +102,38 @@ public class LispEvaluator {
         return expression instanceof ExpressionList;
     }
 
-    private Expression[] expressionTail(Expression expression) {
+    @NonNull
+    private Expression operator(Expression expression) {
+        return expressionCar(expression);
+    }
+
+    private Expression[] operands(Expression expression) {
+        return expressionCdr(expression);
+    }
+
+    private Object[] evalValues(Expression[] operands, Environment environment) {
+        return stream(operands).
+                map(o -> eval(o, environment)).
+                collect(Collectors.toList()).
+                toArray();
+    }
+
+
+    private Expression[] expressionCdr(Expression expression) {
         LinkedList<@NonNull Expression> expressionList =
                 new LinkedList<>(Arrays.asList(((ExpressionList) expression).getExpressions()));
         expressionList.remove(0);
         return expressionList.toArray(new Expression[0]);
     }
 
+    @NonNull
+    private Expression expressionCar(Expression expression) {
+        return ((ExpressionList) expression).getExpressions()[0];
+    }
+
     private boolean isTaggedList(Expression expression, String tag) {
         return expression instanceof ExpressionList
-                && (((ExpressionList) expression).getExpressions()[0] instanceof Token)
-                && ((Token) ((ExpressionList) expression).getExpressions()[0]).getValue().equals(tag);
+                && (expressionCar(expression) instanceof Token)
+                && ((Token) expressionCar(expression)).getValue().equals(tag);
     }
 }
