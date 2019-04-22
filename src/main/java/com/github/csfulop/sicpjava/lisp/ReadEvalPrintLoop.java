@@ -3,6 +3,7 @@ package com.github.csfulop.sicpjava.lisp;
 import com.github.csfulop.sicpjava.lisp.exceptions.EOFException;
 import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
 import com.github.csfulop.sicpjava.lisp.functions.Add;
+import com.github.csfulop.sicpjava.lisp.functions.Equals;
 import com.github.csfulop.sicpjava.lisp.functions.Mul;
 
 import java.io.BufferedReader;
@@ -28,6 +29,7 @@ public class ReadEvalPrintLoop {
     private void setUpBuildInFunctions() {
         global.define("+", new Add());
         global.define("*", new Mul());
+        global.define("=", new Equals());
     }
 
     protected String read(InputStream in) {

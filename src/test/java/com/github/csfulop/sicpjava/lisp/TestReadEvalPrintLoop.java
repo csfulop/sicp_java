@@ -12,16 +12,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class TestReadEvalPrintLoop {
-    private LispEvaluator evaluator;
-    private Environment environment;
-    private Parser parser;
     private ReadEvalPrintLoop repl;
 
     @BeforeEach
     void setUp() {
-        evaluator = new LispEvaluator();
-        environment = new Environment();
-        parser = new Parser();
         repl = new ReadEvalPrintLoop();
     }
 
@@ -92,4 +86,70 @@ public class TestReadEvalPrintLoop {
         repl.eval("(define a 3)");
         assertThat(repl.eval("(begin 1 2 a)"), is(3));
     }
+
+    @Test
+    void testEmptyEquals() {
+        assertThat(repl.eval("(=)"), is(true));
+    }
+
+    @Test
+    void testOneArgumentEquals() {
+        assertThat(repl.eval("(= 1)"), is(true));
+    }
+
+    @Test
+    void testTwoArgumentsAreEqual() {
+        assertThat(repl.eval("(= 1 1)"), is(true));
+    }
+
+    @Test
+    void testTwoArgumentsAreNotEqual() {
+        assertThat(repl.eval("(= 1 2)"), is(false));
+    }
+
+    @Test
+    void testThreeArgumentsAreEqual() {
+        assertThat(repl.eval("(= 2 2 2)"), is(true));
+    }
+
+    @Test
+    void testThreeArgumentsAreNotEqual() {
+        assertThat(repl.eval("(= 2 2 3)"), is(false));
+    }
+
+    @Test
+    void testEqualsWithCalculatedArguments() {
+        assertThat(repl.eval("(= (+ 1 2) (+ 2 1))"), is(true));
+    }
+
+    @Test
+    void testIfTrue() {
+        assertThat(repl.eval("(if (= 1 1) 2 3)"), is(2));
+    }
+
+    @Test
+    void testIfWithoutElseTrue() {
+        assertThat(repl.eval("(if (= 1 1) 2)"), is(2));
+    }
+
+    @Test
+    void testIfFalse() {
+        assertThat(repl.eval("(if (= 1 0) 2 3)"), is(3));
+    }
+
+    @Test
+    void testIfWithoutElseFalse() {
+        assertThat(repl.eval("(if (= 1 0) 2)"), is(nullValue()));
+    }
+
+    @Test
+    void testIfBranchWithBegin() {
+        assertThat(repl.eval("(if (= 1 (* 1 1)) (begin 1 2 (+ 1 1 1)))"), is(3));
+    }
+
+    @Test
+    void testElseBranchWithBegin() {
+        assertThat(repl.eval("(if (= 1 (* 1 0)) 1 (begin 1 2 (+ 1 1 1)))"), is(3));
+    }
+
 }

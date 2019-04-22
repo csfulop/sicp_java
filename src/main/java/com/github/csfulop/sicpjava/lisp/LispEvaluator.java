@@ -20,6 +20,8 @@ public class LispEvaluator {
             return environment.get(((Token) expression).getValue());
         } else if (isDefinition(expression)) {
             evalDefinition(expression, environment);
+        } else if (isIf(expression)) {
+            return evalIf(expression, environment);
         } else if (isAssignment(expression)) {
             evalAssignment(expression, environment);
         } else if (isBegin(expression)) {
@@ -68,6 +70,35 @@ public class LispEvaluator {
         value = Integer.parseInt(valueString); // FIXME: eval value
         environment.define(key, value);
     }
+
+    private boolean isIf(Expression expression) {
+        return isTaggedList(expression, "if");
+    }
+
+    private Object evalIf(Expression expression, Environment environment) {
+        if ((Boolean) eval(ifPredicate(expression), environment)) {
+            return eval(ifConsequent(expression), environment);
+        } else {
+            return eval(ifAlternative(expression), environment);
+        }
+    }
+
+    private Expression ifPredicate(Expression expression) {
+        return expressionCdr(expression)[0];
+    }
+
+    private Expression ifConsequent(Expression expression) {
+        return expressionCdr(expression)[1];
+    }
+
+    private Expression ifAlternative(Expression expression) {
+        if (expressionCdr(expression).length > 2) {
+            return expressionCdr(expression)[2];
+        } else {
+            return null;
+        }
+    }
+
 
     private boolean isBegin(Expression expression) {
         return isTaggedList(expression, "begin");
