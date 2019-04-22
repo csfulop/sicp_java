@@ -21,6 +21,8 @@ public class LispEvaluator {
             evalDefinition(expression, environment);
         } else if (isAssignment(expression)) {
             evalAssignment(expression, environment);
+        } else if (isBegin(expression)) {
+            return evalSequence(beginActions(expression), environment);
         } else if (isApplication(expression)) {
             ExpressionList list = (ExpressionList) expression;
             Function procedure = (Function) eval(list.getExpressions()[0], environment);
@@ -69,6 +71,22 @@ public class LispEvaluator {
         environment.define(key, value);
     }
 
+    private boolean isBegin(Expression expression) {
+        return isTaggedList(expression, "begin");
+    }
+
+    private Expression[] beginActions(Expression expression) {
+        return expressionTail(expression);
+    }
+
+    private Object evalSequence(Expression[] expressions, Environment environment) {
+        Object result = null;
+        for (Expression expression : expressions) {
+            result = eval(expression, environment);
+        }
+        return result;
+    }
+
     private boolean isAssignment(Expression expression) {
         return isTaggedList(expression, "set!");
     }
@@ -84,6 +102,13 @@ public class LispEvaluator {
 
     private boolean isApplication(Expression expression) {
         return expression instanceof ExpressionList;
+    }
+
+    private Expression[] expressionTail(Expression expression) {
+        LinkedList<@NonNull Expression> expressionList =
+                new LinkedList<>(Arrays.asList(((ExpressionList) expression).getExpressions()));
+        expressionList.remove(0);
+        return expressionList.toArray(new Expression[0]);
     }
 
     private boolean isTaggedList(Expression expression, String tag) {

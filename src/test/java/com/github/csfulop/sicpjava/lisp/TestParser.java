@@ -117,4 +117,13 @@ public class TestParser {
         assertThrows(ParserException.class, () -> parser.parse(""));
         assertThrows(ParserException.class, () -> parser.parse("("));
     }
+
+    @Test
+    void canTokenizeWithExtraWhitespaces() {
+        // given
+        // when
+        List<String> tokens = parser.tokenize("(  a   b  )");
+        // then
+        assertThat(tokens, is(asList("(","a","b",")")));
+    }
 }

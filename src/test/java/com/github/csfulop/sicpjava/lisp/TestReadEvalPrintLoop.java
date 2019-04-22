@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -70,6 +71,25 @@ public class TestReadEvalPrintLoop {
         assertThat(repl.eval("(* (+ 1 b) (+ a 2) 2)"), is(32));
     }
 
+    @Test
+    void testValueOfBeginIsTheLastExpression() {
+        assertThat(repl.eval("(begin 10 20)"), is(20));
+    }
 
+    @Test
+    void testEmptyBegin() {
+        assertThat(repl.eval("(begin)"), is(nullValue()));
+    }
 
+    @Test
+    void testBeginUsesParentEnvironment() {
+        repl.eval("(begin (define a 1))");
+        assertThat(repl.eval("a"), is(1));
+    }
+
+    @Test
+    void testBeginCanReadParentEnvironment() {
+        repl.eval("(define a 3)");
+        assertThat(repl.eval("(begin 1 2 a)"), is(3));
+    }
 }
