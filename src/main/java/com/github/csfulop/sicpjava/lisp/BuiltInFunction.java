@@ -1,5 +1,5 @@
 package com.github.csfulop.sicpjava.lisp;
 
-public interface Function {
+public interface BuiltInFunction {
     public Object run(Object... arguments);
 }

@@ -1,8 +1,8 @@
 package com.github.csfulop.sicpjava.lisp.functions;
 
-import com.github.csfulop.sicpjava.lisp.Function;
+import com.github.csfulop.sicpjava.lisp.BuiltInFunction;
 
-public class Add implements Function {
+public class Add implements BuiltInFunction {
     @Override
     public Object run(Object... arguments) {
         int result = 0;

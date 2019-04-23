@@ -1,6 +1,7 @@
 package com.github.csfulop.sicpjava.lisp;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -10,6 +11,7 @@ import java.nio.charset.Charset;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestReadEvalPrintLoop {
     private ReadEvalPrintLoop repl;
@@ -152,4 +154,34 @@ public class TestReadEvalPrintLoop {
         assertThat(repl.eval("(if (= 1 (* 1 0)) 1 (begin 1 2 (+ 1 1 1)))"), is(3));
     }
 
+    @Test
+    void testDefineConstantLambda() {
+        repl.eval("(define f (lambda () 1))");
+        assertThat(repl.eval("(f)"), is(1));
+    }
+
+    @Test
+    void testDefineLambdaWithoutParameters() {
+        repl.eval("(define f (lambda () (* 2 2)))");
+        assertThat(repl.eval("(f)"), is(4));
+    }
+
+    @Test
+    void testLambdaWithoutParametersButComplexBody() {
+        repl.eval("(define f (lambda () (begin (* 1 1) (+ 1 1))))");
+        assertThat(repl.eval("(f)"), is(2));
+    }
+
+    @Test
+    void testInfiniteRecursion() {
+        repl.eval("(define f (lambda () (f)))");
+        assertThrows(StackOverflowError.class, () -> repl.eval("(f)"));
+    }
+
+    @Test
+    @Disabled
+    void testDefineLambdaWithParameters() {
+        repl.eval("(define f (lambda (a) (* a 2)))");
+        assertThat(repl.eval("(f 2)"), is(4));
+    }
 }

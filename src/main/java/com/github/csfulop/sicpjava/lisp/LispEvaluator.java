@@ -1,5 +1,6 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
 import lombok.NonNull;
 
 import java.util.Arrays;
@@ -7,6 +8,8 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.github.csfulop.sicpjava.lisp.ExpressionList.l;
+import static com.github.csfulop.sicpjava.lisp.Token.t;
 import static java.util.Arrays.stream;
 
 public class LispEvaluator {
@@ -18,24 +21,36 @@ public class LispEvaluator {
 
         if (isVariable(expression)) {
             return environment.get(((Token) expression).getValue());
+        } else if (isAssignment(expression)) {
+            evalAssignment(expression, environment);
         } else if (isDefinition(expression)) {
             evalDefinition(expression, environment);
         } else if (isIf(expression)) {
             return evalIf(expression, environment);
-        } else if (isAssignment(expression)) {
-            evalAssignment(expression, environment);
+        } else if (isLambda(expression)) {
+            return makeProcedure(
+                    lambdaParameters(expression),
+                    lambdaBody(expression),
+                    environment);
         } else if (isBegin(expression)) {
             return evalSequence(beginActions(expression), environment);
         } else if (isApplication(expression)) {
             return apply(
-                    (Function) eval(operator(expression), environment),
+                    eval(operator(expression), environment),
                     evalValues(operands(expression), environment));
         }
         return null;
     }
 
-    private Object apply(Function procedure, Object... arguments) {
-        return procedure.run(arguments);
+    private Object apply(Object procedure, Object... arguments) {
+        if (procedure instanceof BuiltInFunction) {
+            return ((BuiltInFunction)procedure).run(arguments);
+        } else if (procedure instanceof CompoundProcedure) {
+            CompoundProcedure compoundProcedure = (CompoundProcedure) procedure;
+            @NonNull Expression[] body = l(compoundProcedure.getBody()).getExpressions();
+            return evalSequence(body, compoundProcedure.getEnvironment());
+        }
+        throw new LispException("Invalid procedure: " + procedure);
     }
 
     private Optional<Object> selfEvaluating(Expression expression) {
@@ -58,17 +73,46 @@ public class LispEvaluator {
         }
     }
 
-    private boolean isDefinition(Expression expression) {
-        return isTaggedList(expression, "define");
+    private boolean isAssignment(Expression expression) {
+        return isTaggedList(expression, "set!");
     }
 
-    private void evalDefinition(Expression expression, Environment environment) {
+    private void evalAssignment(Expression expression, Environment environment) {
         Expression[] tags = ((ExpressionList) expression).getExpressions();
         String key = ((Token) tags[1]).getValue();
         Object value;
         String valueString = ((Token) tags[2]).getValue();
         value = Integer.parseInt(valueString); // FIXME: eval value
-        environment.define(key, value);
+        environment.set(key, value);
+    }
+
+    private boolean isDefinition(Expression expression) {
+        return isTaggedList(expression, "define");
+    }
+
+    private void evalDefinition(Expression expression, Environment environment) {
+        environment.define(
+                definitionVariable(expression),
+                eval(definitionValue(expression), environment));
+    }
+
+    private String definitionVariable(Expression expression) {
+        return ((Token) expressionCdr(expression)[0]).getValue();
+    }
+
+    private Expression definitionValue(Expression expression) {
+        Expression value = expressionCdr(expression)[1];
+//        if (value instanceof Token) {
+//            return value;
+//        } else if (value instanceof ExpressionList) {
+//            // return makeLambda(parameters, body);
+//        }
+//        throw new LispException("Invalid definition value: " + expression);
+        return value;
+    }
+
+    private Expression makeLambda(Expression parameters, Expression body) {
+        return l(t("lambda"), parameters, body);
     }
 
     private boolean isIf(Expression expression) {
@@ -99,6 +143,21 @@ public class LispEvaluator {
         }
     }
 
+    private boolean isLambda(Expression expression) {
+        return isTaggedList(expression, "lambda");
+    }
+
+    private Expression lambdaParameters(Expression expression) {
+        return expressionCdr(expression)[0];
+    }
+
+    private Expression lambdaBody(Expression expression) {
+        return expressionCdr(expression)[1];
+    }
+
+    private CompoundProcedure makeProcedure(Expression parameters, Expression body, Environment environment) {
+        return new CompoundProcedure(parameters, body, environment);
+    }
 
     private boolean isBegin(Expression expression) {
         return isTaggedList(expression, "begin");
@@ -114,19 +173,6 @@ public class LispEvaluator {
             result = eval(expression, environment);
         }
         return result;
-    }
-
-    private boolean isAssignment(Expression expression) {
-        return isTaggedList(expression, "set!");
-    }
-
-    private void evalAssignment(Expression expression, Environment environment) {
-        Expression[] tags = ((ExpressionList) expression).getExpressions();
-        String key = ((Token) tags[1]).getValue();
-        Object value;
-        String valueString = ((Token) tags[2]).getValue();
-        value = Integer.parseInt(valueString); // FIXME: eval value
-        environment.set(key, value);
     }
 
     private boolean isApplication(Expression expression) {
