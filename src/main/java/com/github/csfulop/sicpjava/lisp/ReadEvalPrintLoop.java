@@ -5,6 +5,7 @@ import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
 import com.github.csfulop.sicpjava.lisp.functions.Add;
 import com.github.csfulop.sicpjava.lisp.functions.Equals;
 import com.github.csfulop.sicpjava.lisp.functions.Mul;
+import com.github.csfulop.sicpjava.lisp.functions.Sub;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,10 +16,10 @@ public class ReadEvalPrintLoop {
     private Environment global = new Environment();
     private Parser parser = new Parser();
     private LispEvaluator evaluator = new LispEvaluator();
-    BufferedReader reader;
+    private BufferedReader reader;
 
     public ReadEvalPrintLoop() {
-        setUpBuildInFunctions();
+        setUpBuiltInFunctions();
     }
 
     public static void main(String[] args) {
@@ -26,13 +27,14 @@ public class ReadEvalPrintLoop {
         repl.readEvalPrintLoop();
     }
 
-    private void setUpBuildInFunctions() {
+    private void setUpBuiltInFunctions() {
         global.define("+", new Add());
+        global.define("-", new Sub());
         global.define("*", new Mul());
         global.define("=", new Equals());
     }
 
-    protected String read(InputStream in) {
+    protected String read() {
         System.out.print("> ");
         try {
             String line = reader.readLine();
@@ -43,10 +45,6 @@ public class ReadEvalPrintLoop {
         } catch (IOException e) {
             throw new LispException(e);
         }
-    }
-
-    protected String read() {
-        return read(System.in);
     }
 
     protected Object eval(String command) {

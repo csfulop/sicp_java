@@ -6,7 +6,7 @@ import lombok.NonNull;
 @Data
 public class CompoundProcedure {
     @NonNull
-    private final Expression parameters;
+    private final String[] parameters;
     @NonNull
     private final Expression body;
     @NonNull

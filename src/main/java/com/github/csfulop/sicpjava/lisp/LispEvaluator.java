@@ -17,9 +17,7 @@ public class LispEvaluator {
         Optional<Object> result = selfEvaluating(expression);
         if (result.isPresent()) {
             return result.get();
-        }
-
-        if (isVariable(expression)) {
+        } else if (isVariable(expression)) {
             return environment.get(((Token) expression).getValue());
         } else if (isAssignment(expression)) {
             evalAssignment(expression, environment);
@@ -31,24 +29,32 @@ public class LispEvaluator {
             return makeProcedure(
                     lambdaParameters(expression),
                     lambdaBody(expression),
-                    environment);
+                    environment
+            );
         } else if (isBegin(expression)) {
             return evalSequence(beginActions(expression), environment);
         } else if (isApplication(expression)) {
             return apply(
                     eval(operator(expression), environment),
-                    evalValues(operands(expression), environment));
+                    evalValues(operands(expression), environment)
+            );
         }
         return null;
     }
 
     private Object apply(Object procedure, Object... arguments) {
         if (procedure instanceof BuiltInFunction) {
-            return ((BuiltInFunction)procedure).run(arguments);
+            return ((BuiltInFunction) procedure).run(arguments);
         } else if (procedure instanceof CompoundProcedure) {
             CompoundProcedure compoundProcedure = (CompoundProcedure) procedure;
             @NonNull Expression[] body = l(compoundProcedure.getBody()).getExpressions();
-            return evalSequence(body, compoundProcedure.getEnvironment());
+            return evalSequence(
+                    body,
+                    compoundProcedure.getEnvironment().extend(
+                            compoundProcedure.getParameters(),
+                            arguments
+                    )
+            );
         }
         throw new LispException("Invalid procedure: " + procedure);
     }
@@ -147,15 +153,17 @@ public class LispEvaluator {
         return isTaggedList(expression, "lambda");
     }
 
-    private Expression lambdaParameters(Expression expression) {
-        return expressionCdr(expression)[0];
+    private String[] lambdaParameters(Expression expression) {
+        return stream(((ExpressionList) expressionCdr(expression)[0]).getExpressions()).
+                map(a -> ((Token) a).getValue()).
+                collect(Collectors.toList()).toArray(new String[]{});
     }
 
     private Expression lambdaBody(Expression expression) {
         return expressionCdr(expression)[1];
     }
 
-    private CompoundProcedure makeProcedure(Expression parameters, Expression body, Environment environment) {
+    private CompoundProcedure makeProcedure(String[] parameters, Expression body, Environment environment) {
         return new CompoundProcedure(parameters, body, environment);
     }
 

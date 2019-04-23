@@ -1,5 +1,6 @@
 package com.github.csfulop.sicpjava.lisp;
 
+import com.github.csfulop.sicpjava.lisp.exceptions.LispException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -125,6 +126,19 @@ public class TestReadEvalPrintLoop {
     }
 
     @Test
+    void testSubWithZeroParameters() {
+        LispException exception = assertThrows(LispException.class, () -> repl.eval("(-)"));
+        assertThat(exception.getMessage(), is("The procedure has been called with 0 arguments; it requires at least 1 argument."));
+    }
+
+    @Test
+    void testSub() {
+        assertThat(repl.eval("(- 1)"), is(-1));
+        assertThat(repl.eval("(- 10 1)"), is(9));
+        assertThat(repl.eval("(- 10 1 2)"), is(7));
+    }
+
+    @Test
     void testIfTrue() {
         assertThat(repl.eval("(if (= 1 1) 2 3)"), is(2));
     }
@@ -179,9 +193,42 @@ public class TestReadEvalPrintLoop {
     }
 
     @Test
-    @Disabled
     void testDefineLambdaWithParameters() {
         repl.eval("(define f (lambda (a) (* a 2)))");
         assertThat(repl.eval("(f 2)"), is(4));
+    }
+
+    @Test
+    void testFactorial() {
+        repl.eval("(define factorial (lambda (n) (if (= n 1) 1 (* n (factorial (- n 1))))))");
+        assertThat(repl.eval("(factorial 1)"), is(1));
+        assertThat(repl.eval("(factorial 2)"), is(2));
+        assertThat(repl.eval("(factorial 3)"), is(6));
+        assertThat(repl.eval("(factorial 4)"), is(24));
+        assertThat(repl.eval("(factorial 5)"), is(120));
+    }
+
+    @Test
+    void testLambdaWithTwoParameters() {
+        repl.eval("(define f (lambda (a b) (+ a b)))");
+        assertThat(repl.eval("(f 1 2)"), is(3));
+    }
+
+    @Test
+    void testClosure() {
+        repl.eval("(define f (lambda (x) (lambda (y) (+ x y))))");
+        repl.eval("(define g1 (f 1))");
+        repl.eval("(define g2 (f 2))");
+        assertThat(repl.eval("(g1 2)"), is(3));
+        assertThat(repl.eval("(g1 3)"), is(4));
+        assertThat(repl.eval("(g2 2)"), is(4));
+        assertThat(repl.eval("(g2 3)"), is(5));
+    }
+
+    @Test
+    @Disabled
+    void testLambdaWithMultipleStatements() {
+        repl.eval("(define f (lambda () 1 2))");
+        assertThat(repl.eval("(f)"), is(2));
     }
 }
